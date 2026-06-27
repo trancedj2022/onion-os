@@ -179,21 +179,21 @@ generate_ming_icons() {
 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
   <defs>
     <linearGradient id="mingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#1FA89E"/>
-      <stop offset="100%" style="stop-color:#0E5C54"/>
+      <stop offset="0%" style="stop-color:#2F8A7D"/>
+      <stop offset="100%" style="stop-color:#215F57"/>
     </linearGradient>
     <radialGradient id="glow" cx="50%" cy="35%" r="50%">
-      <stop offset="0%" style="stop-color:#9FE7D7;stop-opacity:0.6"/>
-      <stop offset="100%" style="stop-color:#1FA89E;stop-opacity:0"/>
+      <stop offset="0%" style="stop-color:#DFF6F1;stop-opacity:0.58"/>
+      <stop offset="100%" style="stop-color:#2F8A7D;stop-opacity:0"/>
     </radialGradient>
   </defs>
   <rect width="32" height="32" rx="6" fill="url(#mingGrad)"/>
   <rect width="32" height="32" rx="6" fill="url(#glow)"/>
-  <ellipse cx="16" cy="13" rx="7" ry="5" fill="none" stroke="#D4F7F1" stroke-width="1.5" opacity="0.9"/>
-  <ellipse cx="16" cy="9" rx="5" ry="3.5" fill="none" stroke="#9FE7D7" stroke-width="1.2" opacity="0.8"/>
-  <path d="M13 6 Q16 2 19 6 Q16 8 13 6Z" fill="#D4F7F1" opacity="0.7"/>
-  <path d="M14 20 Q16 18 18 20 L18 24 Q16 25 14 24Z" fill="#9FE7D7" opacity="0.5"/>
-  <circle cx="16" cy="13" r="2" fill="#D4F7F1" opacity="0.4"/>
+  <ellipse cx="16" cy="13" rx="7" ry="5" fill="none" stroke="#ECFAF7" stroke-width="1.5" opacity="0.88"/>
+  <ellipse cx="16" cy="9" rx="5" ry="3.5" fill="none" stroke="#DFF6F1" stroke-width="1.2" opacity="0.76"/>
+  <path d="M13 6 Q16 2 19 6 Q16 8 13 6Z" fill="#ECFAF7" opacity="0.65"/>
+  <path d="M14 20 Q16 18 18 20 L18 24 Q16 25 14 24Z" fill="#DFF6F1" opacity="0.45"/>
+  <circle cx="16" cy="13" r="2" fill="#ECFAF7" opacity="0.36"/>
 </svg>
 MENUICON
 
@@ -205,21 +205,21 @@ MENUICON
 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
   <defs>
     <linearGradient id="mingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#1FA89E"/>
-      <stop offset="100%" style="stop-color:#0E5C54"/>
+      <stop offset="0%" style="stop-color:#2F8A7D"/>
+      <stop offset="100%" style="stop-color:#215F57"/>
     </linearGradient>
     <radialGradient id="glow" cx="50%" cy="35%" r="50%">
-      <stop offset="0%" style="stop-color:#9FE7D7;stop-opacity:0.5"/>
-      <stop offset="100%" style="stop-color:#1FA89E;stop-opacity:0"/>
+      <stop offset="0%" style="stop-color:#DFF6F1;stop-opacity:0.46"/>
+      <stop offset="100%" style="stop-color:#2F8A7D;stop-opacity:0"/>
     </radialGradient>
   </defs>
   <rect width="48" height="48" rx="8" fill="url(#mingGrad)"/>
   <rect width="48" height="48" rx="8" fill="url(#glow)"/>
-  <ellipse cx="24" cy="19" rx="10" ry="7" fill="none" stroke="#D4F7F1" stroke-width="2" opacity="0.9"/>
-  <ellipse cx="24" cy="13" rx="7" ry="5" fill="none" stroke="#9FE7D7" stroke-width="1.5" opacity="0.8"/>
-  <ellipse cx="24" cy="8" rx="4.5" ry="3.2" fill="none" stroke="#6DCFC4" stroke-width="1.2" opacity="0.7"/>
-  <path d="M19 9 Q24 3 29 9 Q24 11 19 9Z" fill="#D4F7F1" opacity="0.6"/>
-  <circle cx="24" cy="19" r="3" fill="#D4F7F1" opacity="0.3"/>
+  <ellipse cx="24" cy="19" rx="10" ry="7" fill="none" stroke="#ECFAF7" stroke-width="2" opacity="0.88"/>
+  <ellipse cx="24" cy="13" rx="7" ry="5" fill="none" stroke="#DFF6F1" stroke-width="1.5" opacity="0.76"/>
+  <ellipse cx="24" cy="8" rx="4.5" ry="3.2" fill="none" stroke="#A8DCD4" stroke-width="1.2" opacity="0.68"/>
+  <path d="M19 9 Q24 3 29 9 Q24 11 19 9Z" fill="#ECFAF7" opacity="0.55"/>
+  <circle cx="24" cy="19" r="3" fill="#ECFAF7" opacity="0.28"/>
 </svg>
 MENUICON48
 
@@ -753,29 +753,29 @@ window {
 }
 
 window decoration {
-  border-radius: 10px;
-  box-shadow: 0 14px 36px rgba(30, 70, 58, 0.16);
-  margin: 6px;
+  border-radius: 12px;
+  box-shadow: 0 18px 42px rgba(26, 67, 56, 0.12);
+  margin: 8px;
 }
 
 button {
-  border-radius: 8px;
-  padding: 6px 14px;
+  border-radius: 10px;
+  padding: 7px 15px;
   border: 1px solid @borders;
   background-image: none;
-  background-color: rgba(255, 255, 255, 0.82);
+  background-color: rgba(255, 255, 255, 0.86);
   color: @theme_fg_color;
   transition: all 200ms ease;
-  min-height: 28px;
+  min-height: 30px;
 }
 
 button:hover {
   background-color: #FFFFFF;
-  border-color: rgba(47, 174, 143, 0.42);
+  border-color: rgba(47, 138, 125, 0.34);
 }
 
 button:active {
-  background-color: #E7F4EF;
+  background-color: #E8F2EE;
 }
 
 button:disabled {
@@ -784,13 +784,13 @@ button:disabled {
 }
 
 button.suggested-action {
-  background-image: linear-gradient(to bottom, #37B99B, #218A78);
-  border-color: rgba(24, 103, 89, 0.42);
+  background-image: linear-gradient(to bottom, #38A595, #237468);
+  border-color: rgba(24, 103, 89, 0.36);
   color: #FFFFFF;
 }
 
 button.suggested-action:hover {
-  background-image: linear-gradient(to bottom, #45C5A8, #26977F);
+  background-image: linear-gradient(to bottom, #44AE9D, #2A8074);
 }
 
 button.destructive-action {
@@ -800,17 +800,17 @@ button.destructive-action {
 }
 
 entry {
-  border-radius: 8px;
-  padding: 6px 12px;
+  border-radius: 10px;
+  padding: 7px 12px;
   border: 1px solid @borders;
   background-color: rgba(255, 255, 255, 0.92);
   color: @theme_fg_color;
-  min-height: 28px;
+  min-height: 30px;
 }
 
 entry:focus {
-  border-color: #2FAE8F;
-  box-shadow: 0 0 0 2px rgba(47, 174, 143, 0.14);
+  border-color: #2F8A7D;
+  box-shadow: 0 0 0 2px rgba(47, 138, 125, 0.12);
 }
 
 notebook header {
@@ -819,13 +819,13 @@ notebook header {
 }
 
 notebook tab {
-  border-radius: 8px 8px 0 0;
-  padding: 6px 16px;
-  background-color: rgba(238, 244, 241, 0.82);
+  border-radius: 10px 10px 0 0;
+  padding: 7px 16px;
+  background-color: rgba(238, 243, 240, 0.84);
   color: @unfocused_fg_color;
   border: 1px solid transparent;
   border-bottom: none;
-  min-height: 28px;
+  min-height: 30px;
 }
 
 notebook tab:checked {
@@ -836,53 +836,53 @@ notebook tab:checked {
 
 scrollbar slider {
   border-radius: 6px;
-  background-color: rgba(71, 111, 98, 0.38);
+  background-color: rgba(71, 111, 98, 0.28);
   min-width: 8px;
   min-height: 24px;
 }
 
 scrollbar slider:hover {
-  background-color: rgba(47, 174, 143, 0.58);
+  background-color: rgba(47, 138, 125, 0.44);
 }
 
 tooltip {
-  border-radius: 8px;
+  border-radius: 10px;
   background-color: rgba(28, 39, 35, 0.96);
   color: #FFFFFF;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 6px 10px;
+  padding: 7px 11px;
 }
 
 menu, .menu {
   background-color: rgba(255, 255, 255, 0.96);
   border: 1px solid @borders;
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 4px;
-  box-shadow: 0 12px 30px rgba(30, 70, 58, 0.12);
+  box-shadow: 0 14px 32px rgba(30, 70, 58, 0.10);
 }
 
 menuitem {
-  border-radius: 6px;
-  padding: 6px 12px;
+  border-radius: 8px;
+  padding: 7px 12px;
   min-height: 24px;
   color: @theme_fg_color;
 }
 
 menuitem:hover {
-  background-color: rgba(47, 174, 143, 0.12);
+  background-color: rgba(47, 138, 125, 0.11);
 }
 
 headerbar {
-  background-color: rgba(255, 255, 255, 0.78);
+  background-color: rgba(255, 255, 255, 0.82);
   border: none;
   border-bottom: 1px solid rgba(31, 98, 84, 0.10);
-  border-radius: 10px 10px 0 0;
-  padding: 4px 8px;
-  min-height: 36px;
+  border-radius: 12px 12px 0 0;
+  padding: 5px 10px;
+  min-height: 38px;
 }
 
 toolbar {
-  background-color: rgba(255, 255, 255, 0.74);
+  background-color: rgba(255, 255, 255, 0.78);
   border: none;
 }
 
@@ -891,62 +891,62 @@ toolbar {
 }
 
 switch {
-  border-radius: 16px;
-  background-color: #D8E1DD;
+  border-radius: 17px;
+  background-color: #DCE4E1;
   border: 1px solid @borders;
 }
 
 switch:checked {
-  background-color: #2FAE8F;
-  border-color: #2FAE8F;
+  background-color: #2F8A7D;
+  border-color: #2F8A7D;
 }
 
 scale slider {
   border-radius: 50%;
-  background-color: #2FAE8F;
-  border: 2px solid #2FAE8F;
+  background-color: #2F8A7D;
+  border: 2px solid #2F8A7D;
   min-width: 16px;
   min-height: 16px;
 }
 
 scale trough {
   border-radius: 4px;
-  background-color: rgba(31, 98, 84, 0.12);
+  background-color: rgba(31, 98, 84, 0.10);
   min-height: 6px;
 }
 
 progressbar trough {
   border-radius: 6px;
-  background-color: rgba(31, 98, 84, 0.10);
+  background-color: rgba(31, 98, 84, 0.08);
   min-height: 8px;
 }
 
 progressbar progress {
   border-radius: 6px;
-  background-color: #2FAE8F;
+  background-color: #2F8A7D;
 }
 
 checkbutton check, radiobutton radio {
-  border-radius: 4px;
-  background-color: rgba(255, 255, 255, 0.82);
+  border-radius: 5px;
+  background-color: rgba(255, 255, 255, 0.86);
   border: 1px solid @borders;
   min-width: 18px;
   min-height: 18px;
 }
 
 checkbutton check:checked, radiobutton radio:checked {
-  background-color: #2FAE8F;
-  border-color: #2FAE8F;
+  background-color: #2F8A7D;
+  border-color: #2F8A7D;
 }
 
 .view, iconview {
-  background-color: rgba(255, 255, 255, 0.76);
+  background-color: rgba(255, 255, 255, 0.80);
   color: @theme_fg_color;
-  border-radius: 8px;
+  border-radius: 10px;
 }
 
 .view:selected, iconview:selected {
-  background-color: rgba(47, 174, 143, 0.20);
+  background-color: rgba(47, 138, 125, 0.18);
   color: @theme_selected_fg_color;
 }
 
@@ -963,35 +963,35 @@ placessidebar,
 .sidebar,
 paned > box,
 stacksidebar {
-  background-color: rgba(239, 244, 241, 0.86);
+  background-color: rgba(238, 243, 240, 0.88);
   border-right: 1px solid rgba(31, 98, 84, 0.12);
 }
 
 placessidebar row,
 .sidebar row,
 stacksidebar row {
-  border-radius: 8px;
+  border-radius: 10px;
   margin: 2px 6px;
-  padding: 5px 8px;
+  padding: 6px 9px;
 }
 
 placessidebar row:selected,
 .sidebar row:selected,
 stacksidebar row:selected {
-  background-color: rgba(47, 174, 143, 0.16);
+  background-color: rgba(47, 138, 125, 0.16);
   color: #1D2421;
 }
 
 .titlebar,
 decoration {
-  border-radius: 10px 10px 0 0;
+  border-radius: 12px 12px 0 0;
 }
 
 .whiskermenu-window,
 #whiskermenu-window {
   background-color: rgba(255, 255, 255, 0.96);
   border: 1px solid rgba(31, 98, 84, 0.14);
-  border-radius: 12px;
+  border-radius: 14px;
 }
 
 spinbutton entry {
@@ -1004,17 +1004,17 @@ spinbutton button {
 }
 
 .xfce4-panel {
-  background-color: rgba(255, 255, 255, 0.76);
+  background-color: rgba(255, 255, 255, 0.80);
   border: 1px solid rgba(31, 98, 84, 0.12);
-  border-radius: 12px;
+  border-radius: 14px;
   margin: 6px 8px 4px 8px;
-  box-shadow: 0 10px 26px rgba(30, 70, 58, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.58);
+  box-shadow: 0 10px 28px rgba(30, 70, 58, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.62);
   padding: 2px 6px;
 }
 
 .xfce4-panel button {
-  border-radius: 10px;
-  padding: 3px 6px;
+  border-radius: 11px;
+  padding: 4px 7px;
   margin: 2px 4px;
   border: 1px solid transparent;
   background-color: transparent;
@@ -1024,13 +1024,13 @@ spinbutton button {
 }
 
 .xfce4-panel button:hover {
-  background-color: rgba(47, 174, 143, 0.12);
-  border-color: rgba(47, 174, 143, 0.28);
+  background-color: rgba(47, 138, 125, 0.11);
+  border-color: rgba(47, 138, 125, 0.24);
 }
 
 .xfce4-panel button:checked {
-  background-color: rgba(47, 174, 143, 0.18);
-  border-color: rgba(47, 174, 143, 0.34);
+  background-color: rgba(47, 138, 125, 0.17);
+  border-color: rgba(47, 138, 125, 0.32);
 }
 MINGGLASSCSS
 
@@ -1533,27 +1533,27 @@ import subprocess
 import sys
 
 CSS = b'''
-window { background: #F6F8F6; }
+window { background: #F4F6F3; }
 .root {
-  background: linear-gradient(135deg, #F8FAF8, #EEF6F2 58%, #DDEFE8);
-  color: #1D2421;
+  background: linear-gradient(135deg, #F7F9F5, #EEF4EF 58%, #E4EDE8);
+  color: #1C2320;
 }
-.title { font-size: 24px; font-weight: 800; color: #1D2421; }
-.subtitle { font-size: 12px; color: #4F625A; }
-.time { font-size: 34px; font-weight: 800; color: #1D2421; }
-.date { font-size: 12px; color: #66736D; }
+.title { font-size: 24px; font-weight: 800; color: #1C2320; }
+.subtitle { font-size: 12px; color: #51605A; }
+.time { font-size: 34px; font-weight: 800; color: #1C2320; }
+.date { font-size: 12px; color: #66726C; }
 .tile {
-  background: rgba(255,255,255,0.76);
-  border: 1px solid rgba(31,98,84,0.13);
-  border-radius: 10px;
+  background: rgba(255,255,255,0.84);
+  border: 1px solid rgba(31,98,84,0.10);
+  border-radius: 12px;
   padding: 12px;
-  color: #1D2421;
+  color: #1C2320;
 }
 .tile:hover {
-  background: rgba(255,255,255,0.94);
-  border-color: rgba(47,174,143,0.36);
+  background: rgba(255,255,255,0.96);
+  border-color: rgba(47,138,125,0.26);
 }
-.tile label { color: #1D2421; font-weight: 700; }
+.tile label { color: #1C2320; font-weight: 700; }
 .danger {
   background: rgba(255,247,247,0.90);
   border-color: rgba(178,59,72,0.28);
@@ -1694,40 +1694,40 @@ import sys
 APP_DIRS = ['/usr/share/applications', os.path.expanduser('~/.local/share/applications')]
 
 CSS = b'''
-window { background: #F6F8F6; }
+window { background: #F4F6F3; }
 .root {
-  background: linear-gradient(135deg, #F8FAF8, #EEF6F2 52%, #DDEFE8);
-  color: #1D2421;
+  background: linear-gradient(135deg, #F7F9F5, #EEF4EF 52%, #E4EDE8);
+  color: #1C2320;
 }
-.title { font-size: 26px; font-weight: 800; color: #1D2421; }
-.subtitle { font-size: 12px; color: #4F625A; }
+.title { font-size: 26px; font-weight: 800; color: #1C2320; }
+.subtitle { font-size: 12px; color: #51605A; }
 .search {
   min-height: 42px;
-  border-radius: 10px;
-  background: rgba(255,255,255,0.84);
-  color: #1D2421;
-  border: 1px solid rgba(31,98,84,0.14);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.86);
+  color: #1C2320;
+  border: 1px solid rgba(31,98,84,0.10);
   padding: 0 12px;
 }
 .app-tile {
-  background: rgba(255,255,255,0.74);
-  border: 1px solid rgba(31,98,84,0.13);
-  border-radius: 10px;
+  background: rgba(255,255,255,0.84);
+  border: 1px solid rgba(31,98,84,0.10);
+  border-radius: 12px;
   padding: 10px;
-  color: #1D2421;
+  color: #1C2320;
 }
 .app-tile:hover {
-  background: rgba(255,255,255,0.94);
-  border-color: rgba(47,174,143,0.36);
+  background: rgba(255,255,255,0.96);
+  border-color: rgba(47,138,125,0.26);
 }
-.app-name { font-size: 11px; font-weight: 700; color: #1D2421; }
+.app-name { font-size: 11px; font-weight: 700; color: #1C2320; }
 .quick-button {
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 9px 12px;
-  background: rgba(255,255,255,0.76);
-  color: #1D2421;
+  background: rgba(255,255,255,0.84);
+  color: #1C2320;
 }
-.quick-button:hover { background: rgba(47,174,143,0.14); }
+.quick-button:hover { background: rgba(47,138,125,0.12); }
 '''
 
 def read_desktop_file(path):
