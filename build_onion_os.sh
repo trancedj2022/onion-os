@@ -206,6 +206,29 @@ chroot_exec() {
         ROOT_PASS="${ROOT_PASS}" \
         "$@"
 }
+
+wait_chroot_apt_locks() {
+    local attempt
+    for attempt in $(seq 1 120); do
+        if ! chroot_exec fuser /var/lib/dpkg/lock /var/lib/dpkg/lock-frontend /var/cache/apt/archives/lock >/dev/null 2>&1; then
+            return 0
+        fi
+        sleep 1
+    done
+    log_error "chroot apt/dpkg locks did not clear after 120 seconds"
+}
+
+settle_chroot_dpkg() {
+    local label="$1"
+    log_info "Checking package database after ${label}"
+    wait_chroot_apt_locks
+    chroot_exec dpkg --configure -a
+    wait_chroot_apt_locks
+    chroot_exec apt-get -f install -y --no-install-recommends
+    if chroot_exec dpkg --audit | grep -q .; then
+        log_error "dpkg audit still reports unfinished packages after ${label}"
+    fi
+}
 # 将模块脚本和配置文件复制到 chroot 中
 prepare_chroot_scripts() {
     log_info "准备 chroot 内执行环境"
@@ -239,6 +262,7 @@ run_modules() {
         if [[ -f "${CHROOT_DIR}${mod_path}" ]]; then
             log_step "执行模块: ${mod}"
             chroot_exec bash "${mod_path}"
+            settle_chroot_dpkg "${mod}"
             log_info "模块 ${mod} 执行完成"
         else
             log_error "模块脚本不存在: ${mod}"
