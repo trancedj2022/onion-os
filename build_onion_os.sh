@@ -296,7 +296,9 @@ validate_linux_kernel() {
         return 1
     fi
 
-    if dd if="${kernel_path}" bs=1 count=4096 2>/dev/null | tr -d '\000' | head -c 1 | grep -q .; then
+    local sample_hex
+    sample_hex=$(od -An -tx1 -N4096 "${kernel_path}" 2>/dev/null | tr -d ' \n0')
+    if [[ -n "${sample_hex}" ]]; then
         log_info "${label} kernel validation passed: ${file_info}"
     else
         log_error "${label} appears to be all zero bytes"
