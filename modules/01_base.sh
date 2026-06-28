@@ -34,7 +34,9 @@ deb https://mirrors.tuna.tsinghua.edu.cn/debian/ trixie-updates main contrib non
 deb https://mirrors.tuna.tsinghua.edu.cn/debian-security trixie-security main contrib non-free non-free-firmware
 APTSRC
 
-    apt update
+    if [[ "${MING_SKIP_APT_UPDATE:-0}" != "1" ]]; then
+        apt update
+    fi
 }
 
 # ======================== 内核与基础包 ========================
@@ -544,16 +546,20 @@ if command -v zenity >/dev/null 2>&1 && [[ -n "${DISPLAY:-}" ]]; then
         2>/dev/null || exit 0
 fi
 
-echo "Installing optional linux-surface support..."
-apt update
-apt install -y --no-install-recommends curl ca-certificates gnupg
+    echo "Installing optional linux-surface support..."
+    if [[ "${MING_SKIP_APT_UPDATE:-0}" != "1" ]]; then
+        apt update
+    fi
+    apt install -y --no-install-recommends curl ca-certificates gnupg
 mkdir -p /etc/apt/keyrings
 curl -fsSL https://raw.githubusercontent.com/linux-surface/linux-surface/master/pkg/keys/surface.asc | gpg --dearmor > /etc/apt/keyrings/linux-surface.gpg
 cat > /etc/apt/sources.list.d/linux-surface.list <<'EOF'
 deb [arch=amd64 signed-by=/etc/apt/keyrings/linux-surface.gpg] https://pkg.surfacelinux.com/debian release main
 EOF
-apt update
-apt install -y --no-install-recommends linux-image-surface linux-headers-surface iptsd libwacom-surface linux-surface-secureboot-mok \
+    if [[ "${MING_SKIP_APT_UPDATE:-0}" != "1" ]]; then
+        apt update
+    fi
+    apt install -y --no-install-recommends linux-image-surface linux-headers-surface iptsd libwacom-surface linux-surface-secureboot-mok \
     || apt install -y --no-install-recommends linux-image-surface linux-headers-surface \
     || true
 apt install -y --no-install-recommends surface-control || true
