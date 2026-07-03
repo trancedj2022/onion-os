@@ -204,7 +204,7 @@ chroot_exec() {
         MING_USER="${MING_USER}" \
         MING_USER_PASS="${MING_USER_PASS}" \
         ROOT_PASS="${ROOT_PASS}" \
-        "$@"
+        "$@" </dev/null
 }
 
 wait_chroot_apt_locks() {
@@ -237,11 +237,33 @@ prepare_chroot_scripts() {
     cp -r "${MODULES_DIR}"/* "${CHROOT_DIR}/tmp/ming-build/modules/"
     cp -r "${CONFIG_DIR}"/* "${CHROOT_DIR}/tmp/ming-build/config/"
     chmod +x "${CHROOT_DIR}/tmp/ming-build/modules/"*.sh
-    # 复制 assets（含 AI 生成壁纸 PNG）
     if [[ -d "${SCRIPT_DIR}/assets" ]]; then
         mkdir -p "${CHROOT_DIR}/tmp/ming-build/assets"
         cp -r "${SCRIPT_DIR}/assets/"* "${CHROOT_DIR}/tmp/ming-build/assets/" 2>/dev/null || true
     fi
+
+    # 部署可执行的 apt-build wrapper，供模块脚本里 timeout 直接调用。
+    # 根因：bash 函数无法被 timeout 启动（exec 语义），必须是真实可执行文件。
+    # 该脚本断开 stdin + 关闭 pty，彻底避免后台构建时 apt/dpkg/maintainer-script 挂住。
+    cat > "${CHROOT_DIR}/usr/local/sbin/apt-build" << 'APT_BUILD_WRAPPER'
+#!/bin/sh
+# Ming OS build-time apt wrapper: non-interactive, no pty, stdin from /dev/null.
+# Usage: apt-build install [-y] [--no-install-recommends] pkg...
+#        apt-build <any apt-get sub-command> [args...]
+exec env \
+    DEBIAN_FRONTEND=noninteractive \
+    DEBCONF_NONINTERACTIVE_SEEN=true \
+    APT_LISTCHANGES_FRONTEND=none \
+    UCF_FORCE_CONFFOLD=1 \
+    apt-get \
+    -y \
+    -o Dpkg::Use-Pty=0 \
+    -o APT::Install-Recommends=false \
+    -o Dpkg::Options::="--force-confold" \
+    -o Dpkg::Options::="--force-confdef" \
+    "$@" </dev/null
+APT_BUILD_WRAPPER
+    chmod 0755 "${CHROOT_DIR}/usr/local/sbin/apt-build"
 }
 # ======================== 模块脚本执行 ========================
 run_modules() {

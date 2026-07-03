@@ -739,9 +739,10 @@ WPSINSTALLDESKTOP
 
     echo "下载 WPS Office..."
     if wget -q --show-progress -O "${wps_deb}" "${wps_url}" 2>/dev/null; then
-        if ! timeout 900 apt install -y "${wps_deb}"; then
-            echo "[WARN] WPS Office build-time install timed out or failed; keeping on-demand installer instead."
-            apt install -y -f || true
+        # 用 apt-build 可执行包装器（非 shell 函数，timeout 可直接调用）
+        if ! timeout 900 /usr/local/sbin/apt-build install "${wps_deb}"; then
+            echo "[WARN] WPS Office 安装超时或失败，保留按需安装脚本。"
+            /usr/local/sbin/apt-build -f install || true
         fi
         rm -f "${wps_deb}"
     else
@@ -763,7 +764,8 @@ install_wechat() {
 
     echo "下载微信官方 Linux 版..."
     if wget -q --show-progress -O "${wechat_deb}" "${wechat_url}" 2>/dev/null; then
-        apt install -y "${wechat_deb}" || apt install -y -f
+        timeout 600 /usr/local/sbin/apt-build install "${wechat_deb}" || \
+            /usr/local/sbin/apt-build -f install || true
         rm -f "${wechat_deb}"
     else
         echo "[WARN] 微信官方 deb 下载失败，跳过。用户可后续运行 ming-install-wechat 安装。"
