@@ -9,8 +9,8 @@ output/ming-os-26.3.1-home-amd64.iso
 ```
 
 ```text
-Size:   2698493952
-SHA256: 0a23e1ce739ced8daede1b2deb6e7d5879c9b0b44e1ecb43fda0422c2a164df1
+Size:   2695856128
+SHA256: e5b35e2dd9698d87188081b66ac59bcab04e020c0fdc1ff6516f35a30d7efa32
 Label:  MING_OS_2631
 Kernel: 6.12.94+deb13-amd64
 ```
@@ -83,9 +83,9 @@ Expected public response:
   "ready": true,
   "status": "ready",
   "download_url": "https://ming.scallion.uno/iso/ming-os-26.3.1-home-amd64.iso",
-  "checksum": "0a23e1ce739ced8daede1b2deb6e7d5879c9b0b44e1ecb43fda0422c2a164df1",
+  "checksum": "e5b35e2dd9698d87188081b66ac59bcab04e020c0fdc1ff6516f35a30d7efa32",
   "checksum_type": "sha256",
-  "size": 2698493952
+  "size": 2695856128
 }
 ```
 

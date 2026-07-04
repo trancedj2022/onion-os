@@ -29,8 +29,8 @@ https://github.com/bzm2008/ming-os/releases/tag/v26.3.1
 Current ISO metadata:
 
 ```text
-Size:   2698493952
-SHA256: 0a23e1ce739ced8daede1b2deb6e7d5879c9b0b44e1ecb43fda0422c2a164df1
+Size:   2695856128
+SHA256: e5b35e2dd9698d87188081b66ac59bcab04e020c0fdc1ff6516f35a30d7efa32
 ```
 
 Do not use this historical file to recommend 26.2.x images to new users.
