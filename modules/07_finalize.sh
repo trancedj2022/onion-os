@@ -73,6 +73,7 @@ reset_desktop_dir() {
 
     mkdir -p "${target_dir}"
     find "${target_dir}" -maxdepth 1 -type f -name '*.desktop' -delete 2>/dev/null || true
+    find "${target_dir}" -maxdepth 1 -type l -delete 2>/dev/null || true
     while IFS= read -r -d '' dir; do
         if ! find "${dir}" -mindepth 1 ! -name '*.desktop' -print -quit 2>/dev/null | grep -q .; then
             rm -rf "${dir}"

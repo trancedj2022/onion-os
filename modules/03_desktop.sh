@@ -2059,7 +2059,7 @@ DISKDESKTOP
 chmod +x "${desktop}/Ming 设置.desktop" "${desktop}/Ming 应用库.desktop" "${desktop}/所有磁盘.desktop" 2>/dev/null || true
 
 /usr/local/bin/ming-disk-hub >/tmp/ming-disk-hub.log 2>&1 || true
-ln -sfn "${HOME}/所有磁盘" "${disks_link}" 2>/dev/null || true
+rm -f "${disks_link}" 2>/dev/null || true
 
 gio set "${apps_dir}" metadata::custom-icon-name application-x-executable 2>/dev/null || true
 gio set "${system_dir}" metadata::custom-icon-name ming-control-center 2>/dev/null || true
