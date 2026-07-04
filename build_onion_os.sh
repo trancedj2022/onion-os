@@ -592,6 +592,7 @@ for marker in [
     "set_keep_below(True)",
     "skip_taskbar,skip_pager",
     "CORE_NAMES",
+    "launch_item(item)",
 ]:
     if marker not in phone_desktop:
         errors.append(f"ming-phone-desktop missing desktop-layer/core-app marker {marker}")
@@ -609,8 +610,14 @@ ming_dock = require_file("usr/local/bin/ming-dock", "Gdk.WindowTypeHint.DOCK")
 for marker in ["set_keep_above(True)", "DockButton", "ming-update.desktop"]:
     if marker not in ming_dock:
         errors.append(f"ming-dock missing marker {marker}")
-require_file("usr/local/bin/ming-dock-watchdog", "starting ming-dock")
+ming_dock_watchdog = require_file("usr/local/bin/ming-dock-watchdog", "starting ming-dock")
+if "python3 .*ming-dock|/usr/local/bin/ming-dock" in ming_dock_watchdog:
+    errors.append("ming-dock-watchdog pgrep pattern must not match ming-dock-watchdog itself")
+if "ming-dock([[:space:]]|$)" not in ming_dock_watchdog:
+    errors.append("ming-dock-watchdog must use a bounded ming-dock process match")
+require_file("usr/local/bin/ming-phone-desktop-watchdog", "starting ming-phone-desktop")
 require_file("home/user/.config/autostart/ming-dock.desktop", "ming-dock-watchdog --session")
+require_file("home/user/.config/autostart/ming-phone-desktop.desktop", "ming-phone-desktop-watchdog --session")
 
 plank_settings = require_file("home/user/.config/plank/dock1/settings", "DockItems=ming-settings.dockitem")
 for marker in ["IconSize=40", "ZoomEnabled=true", "ZoomPercent=148", "HideMode=0", "Theme=Ming"]:
@@ -623,8 +630,9 @@ if "Ming OS Update Manager" in update_gui or "Check updates" in update_gui or "S
 
 require_path("usr/share/backgrounds/ming-os/default.png")
 appearance = require_file("usr/local/bin/ming-apply-appearance", "/usr/share/backgrounds/ming-os/default.png")
-if "xfdesktop --reload" not in appearance:
-    errors.append("ming-apply-appearance must reload xfdesktop after setting wallpaper")
+for marker in ["xfdesktop --quit", "pkill -u \"$(id -u)\" -x xfdesktop", "ming-phone-desktop-watchdog", "ming-dock-watchdog"]:
+    if marker not in appearance:
+        errors.append(f"ming-apply-appearance missing desktop ownership marker {marker}")
 
 for helper in [
     "usr/local/bin/ming-network-repair",
@@ -634,6 +642,7 @@ for helper in [
     "usr/local/bin/ming-classic-mode",
     "usr/local/bin/ming-lock",
     "usr/local/bin/ming-plank-watchdog",
+    "usr/local/bin/ming-phone-desktop-watchdog",
 ]:
     require_file(helper)
 

@@ -1419,6 +1419,7 @@ PLANKTHEME
     cat > /usr/local/bin/ming-dock << 'MINGDOCK'
 #!/usr/bin/env python3
 import configparser
+import subprocess
 from pathlib import Path
 
 import gi
@@ -1507,9 +1508,13 @@ class DockButton(Gtk.Button):
     def launch(self, *_args):
         try:
             info = Gio.DesktopAppInfo.new_from_filename(str(self.path)) if self.path else None
-            if info:
-                info.launch([], None)
+            if info and info.launch([], None):
                 return
+        except Exception:
+            pass
+        try:
+            subprocess.Popen(['gtk-launch', Path(self.basename).stem])
+            return
         except Exception:
             pass
         try:
@@ -1549,7 +1554,6 @@ class MingDock(Gtk.Window):
         x = max(12, int((screen.get_width() - width) / 2))
         y = max(12, screen.get_height() - height - 18)
         self.move(x, y)
-        self.present()
         return True
 
 if __name__ == '__main__':
@@ -1564,7 +1568,7 @@ set -u
 
 start_ming_dock() {
     command -v ming-dock >/dev/null 2>&1 || return 0
-    pgrep -u "$(id -u)" -f "python3 .*ming-dock|/usr/local/bin/ming-dock" >/dev/null 2>&1 && return 0
+    pgrep -u "$(id -u)" -f '(^|[[:space:]])python3([0-9.]*)?[[:space:]]+/usr/local/bin/ming-dock([[:space:]]|$)|(^|[[:space:]])/usr/local/bin/ming-dock([[:space:]]|$)' >/dev/null 2>&1 && return 0
     mkdir -p "${HOME}/.cache/ming-os"
     export DISPLAY="${DISPLAY:-:0}"
     export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
@@ -1587,6 +1591,55 @@ case "${1:-start}" in
 esac
 MINGDOCKWATCH
     chmod 0755 /usr/local/bin/ming-dock-watchdog
+
+    cat > /usr/local/bin/ming-phone-desktop-watchdog << 'PHONEDESKWATCH'
+#!/usr/bin/env bash
+set -u
+
+stop_xfdesktop() {
+    # Ming Phone Desktop owns wallpaper, icons and click handling.
+    # xfdesktop draws a separate desktop window that can sit above it and steal clicks.
+    xfdesktop --quit >/dev/null 2>&1 || true
+    pkill -u "$(id -u)" -x xfdesktop >/dev/null 2>&1 || true
+}
+
+phone_desktop_running() {
+    pgrep -u "$(id -u)" -f '(^|[[:space:]])python3([0-9.]*)?[[:space:]]+/usr/local/bin/ming-phone-desktop([[:space:]]|$)|(^|[[:space:]])/usr/local/bin/ming-phone-desktop([[:space:]]|$)' >/dev/null 2>&1
+}
+
+start_phone_desktop() {
+    command -v ming-phone-desktop >/dev/null 2>&1 || return 0
+    mkdir -p "${HOME}/.cache/ming-os"
+    export DISPLAY="${DISPLAY:-:0}"
+    export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+    export DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-unix:path=${XDG_RUNTIME_DIR}/bus}"
+    stop_xfdesktop
+    phone_desktop_running && return 0
+    echo "[$(date '+%F %T')] starting ming-phone-desktop DISPLAY=${DISPLAY}" >>"${HOME}/.cache/ming-os/ming-phone-desktop.log"
+    (nohup ming-phone-desktop >>"${HOME}/.cache/ming-os/ming-phone-desktop.log" 2>&1 &) || true
+}
+
+lock_dir="${XDG_RUNTIME_DIR:-/tmp}/ming-phone-desktop-watchdog.lock"
+if ! mkdir "${lock_dir}" 2>/dev/null; then
+    start_phone_desktop
+    exit 0
+fi
+trap 'rmdir "${lock_dir}" 2>/dev/null || true' EXIT
+
+case "${1:-start}" in
+    --session)
+        sleep 4
+        while true; do
+            start_phone_desktop
+            sleep 5
+        done
+        ;;
+    *)
+        start_phone_desktop
+        ;;
+esac
+PHONEDESKWATCH
+    chmod 0755 /usr/local/bin/ming-phone-desktop-watchdog
 
     cat > /usr/local/bin/ming-plank-watchdog << 'PLANKWATCH'
 #!/usr/bin/env bash
@@ -2321,6 +2374,7 @@ import datetime
 import hashlib
 import json
 import os
+import shlex
 import shutil
 import subprocess
 import sys
@@ -2376,6 +2430,7 @@ CORE_GENERATED = {
     'ming-disk-hub.desktop': ('所有磁盘', 'ming-disk-hub --open', 'drive-harddisk', 'System;FileManager;'),
     'garlic-claw.desktop': ('Garlic Claw', 'xfce4-terminal --hide-menubar --title="Garlic Claw" -e garlic-claw', 'utilities-terminal', 'Utility;'),
 }
+LOG_PATH = HOME / '.cache' / 'ming-os' / 'ming-phone-desktop.log'
 LAYOUT_VERSION = 4
 GRID_W = 86
 GRID_H = 98
@@ -2493,6 +2548,42 @@ def read_app(path):
         'icon': entry.get('Icon') or 'application-x-executable',
         'categories': entry.get('Categories', ''),
     }
+
+def log(message):
+    try:
+        LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+        with LOG_PATH.open('a', encoding='utf-8') as handle:
+            handle.write(datetime.datetime.now().strftime('[%F %T] ') + message + '\n')
+    except Exception:
+        pass
+
+def launch_item(item):
+    path = item.get('path')
+    if not path:
+        return False
+    try:
+        info = Gio.DesktopAppInfo.new_from_filename(path)
+        if info and info.launch([], None):
+            return True
+    except Exception as exc:
+        log(f"Gio launch failed for {path}: {exc}")
+    try:
+        subprocess.Popen(['gtk-launch', Path(path).stem])
+        return True
+    except Exception as exc:
+        log(f"gtk-launch failed for {path}: {exc}")
+    parser = configparser.ConfigParser(interpolation=None, strict=False)
+    parser.optionxform = str
+    try:
+        parser.read(path, encoding='utf-8')
+        exec_line = parser['Desktop Entry'].get('Exec', '')
+        argv = [part for part in shlex.split(exec_line) if not part.startswith('%')]
+        if argv:
+            subprocess.Popen(argv)
+            return True
+    except Exception as exc:
+        log(f"Exec fallback failed for {path}: {exc}")
+    return False
 
 def add_app_from_path(apps_by_basename, path, default_only=False):
     item = read_app(path)
@@ -3002,14 +3093,8 @@ class PhoneDesktop(Gtk.Window):
         if item.get('type') == 'folder':
             self.show_folder(item)
             return
-        try:
-            info = Gio.DesktopAppInfo.new_from_filename(item.get('path'))
-            if info:
-                info.launch([], None)
-                return
-        except Exception:
-            pass
-        subprocess.Popen(['gtk-launch', Path(item.get('path', '')).stem])
+        if not launch_item(item):
+            log(f"no launch method worked for {item.get('path')}")
 
     def show_folder(self, folder):
         dialog = Gtk.Dialog(title=folder.get('name', '文件夹'), transient_for=self, flags=0)
@@ -4111,11 +4196,11 @@ DESKORGAUTO
 Type=Application
 Name=Ming Phone Desktop
 Comment=手机式桌面图标和拖拽文件夹
-Exec=sh -c "sleep 8; wmctrl -k on 2>/dev/null || true; exec /usr/local/bin/ming-phone-desktop"
+Exec=/usr/local/bin/ming-phone-desktop-watchdog --session
 Hidden=false
 NoDisplay=true
 X-GNOME-Autostart-enabled=true
-X-GNOME-Autostart-Delay=8
+X-GNOME-Autostart-Delay=4
 PHONEDESKTOPAUTO
 
     chown -R "${MING_USER}:${MING_USER}" "${autostart_dir}"
@@ -5517,13 +5602,20 @@ if [[ "${MEM_MB}" -le 2600 && -f "${PLANK_SETTINGS}" ]]; then
     sed -i "s/^ZoomPercent=.*/ZoomPercent=110/" "${PLANK_SETTINGS}" 2>/dev/null || true
 fi
 
-# 刷新桌面
-xfdesktop --reload 2>/dev/null || true
+# Ming 手机桌面接管壁纸、图标和点击；关闭 xfdesktop 避免它的桌面窗口盖住 Ming 图标。
+xfconf-query -c xfce4-desktop -p /desktop-icons/style -n -t int -s 0 2>/dev/null || true
+xfdesktop --quit >/dev/null 2>&1 || true
+pkill -u "$(id -u)" -x xfdesktop >/dev/null 2>&1 || true
 
 # Dock-only 桌面：Xfce 面板只作为兼容组件安装，不作为可见任务栏运行。
 mkdir -p "${HOME}/.cache/sessions"
 rm -f "${HOME}/.cache/sessions/xfce4-session-"* 2>/dev/null || true
 xfce4-panel --quit >/dev/null 2>&1 || true
+
+# 确保 Ming 手机桌面在运行。它必须早于 Dock 出现，避免只剩空壁纸。
+if command -v ming-phone-desktop-watchdog &>/dev/null; then
+    /usr/local/bin/ming-phone-desktop-watchdog >/dev/null 2>&1 || true
+fi
 
 # 确保 Ming Dock 在运行（picom 启动后）
 if command -v ming-dock-watchdog &>/dev/null; then
