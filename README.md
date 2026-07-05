@@ -19,7 +19,7 @@ Ming OS is a Debian 13 / Trixie based Chinese desktop system for older PCs, fami
 Official download:
 
 ```text
-https://ming.scallion.uno/iso/ming-os-26.3.1-home-amd64.iso
+https://ming.scallion.uno/iso/ming-os-26.3.1-home-amd64.download
 ```
 
 OTA endpoint:
@@ -100,7 +100,7 @@ Expected public OTA response:
   "version": "26.3.1",
   "ready": true,
   "status": "ready",
-  "download_url": "https://ming.scallion.uno/iso/ming-os-26.3.1-home-amd64.iso",
+  "download_url": "https://ming.scallion.uno/iso/ming-os-26.3.1-home-amd64.download",
   "checksum": "5188940fad9365921e440b60f5509d8d8fe53cf3c61c666b0c65e4a1f1bb3f48",
   "checksum_type": "sha256",
   "size": 2695856128

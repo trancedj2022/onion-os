@@ -11,7 +11,7 @@ Ming OS 26.3.1 Home Edition
 Current download:
 
 ```text
-https://ming.scallion.uno/iso/ming-os-26.3.1-home-amd64.iso
+https://ming.scallion.uno/iso/ming-os-26.3.1-home-amd64.download
 ```
 
 Current OTA endpoint:
