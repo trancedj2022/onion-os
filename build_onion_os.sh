@@ -472,6 +472,10 @@ keyboard = load_yaml("etc/calamares/modules/keyboard.conf")
 if keyboard.get("layout") != "us":
     errors.append("keyboard.conf must keep physical keyboard layout as us")
 
+finished = load_yaml("etc/calamares/modules/finished.conf")
+if finished.get("restartNowCommand") != "/usr/local/sbin/ming-finish-install-reboot":
+    errors.append("finished.conf must reboot through ming-finish-install-reboot")
+
 users = load_yaml("etc/calamares/modules/users.conf")
 if users.get("allowWeakPasswords") is not True:
     errors.append("users.conf must allow weak passwords to avoid pwquality dictionary install blockers")
@@ -488,6 +492,7 @@ if not grub_install.is_file():
 for relative_path in [
     "usr/local/sbin/ming-calamares-preflight",
     "usr/local/sbin/ming-install-bootloader",
+    "usr/local/sbin/ming-finish-install-reboot",
     "usr/local/bin/ming-calamares-launcher",
     "usr/local/bin/ming-live-installer.sh",
     "usr/local/bin/ming-installer-session",
@@ -510,8 +515,15 @@ for relative_path in [
                 errors.append(f"{relative_path} must install BIOS GRUB into the target boot directory")
             if "--target=x86_64-efi" not in text or "BOOTX64.EFI" not in text or "--removable" not in text:
                 errors.append(f"{relative_path} must install a removable UEFI fallback bootloader")
+            if "efibootmgr -n" not in text or "prefer_ming_uefi_boot" not in text:
+                errors.append(f"{relative_path} must prefer the installed Ming UEFI boot entry")
             if "bootloader.log" not in text:
                 errors.append(f"{relative_path} must write a diagnostic bootloader log")
+        if relative_path.endswith("ming-finish-install-reboot"):
+            if "eject" not in text or "systemctl -i reboot" not in text:
+                errors.append(f"{relative_path} must eject live media before rebooting")
+            if "efibootmgr -n" not in text:
+                errors.append(f"{relative_path} must prefer Ming OS for the next UEFI boot")
         if relative_path.endswith("ming-calamares-launcher"):
             if "ming-calamares-preflight" not in text or "calamares -d" not in text:
                 errors.append(f"{relative_path} must run preflight before calamares")
@@ -539,6 +551,31 @@ if errors:
     sys.exit(1)
 PY
     log_info "Calamares installer configuration validation passed"
+}
+
+validate_iso_grub_config() {
+    local grub_cfg="${ISO_DIR}/boot/grub/grub.cfg"
+    if [[ ! -s "${grub_cfg}" ]]; then
+        log_error "ISO GRUB config is missing: ${grub_cfg}"
+        exit 1
+    fi
+    if ! grep -Fq 'set default=ming-installed' "${grub_cfg}"; then
+        log_error "ISO GRUB must default to the installed Ming OS when /etc/ming-release is present"
+        exit 1
+    fi
+    if ! grep -Fq 'set timeout=0' "${grub_cfg}"; then
+        log_error "ISO GRUB must hand off to the installed Ming OS immediately"
+        exit 1
+    fi
+    if ! grep -Fq 'linux /vmlinuz root=UUID=' "${grub_cfg}"; then
+        log_error "ISO GRUB must direct-boot the installed Ming OS kernel"
+        exit 1
+    fi
+    if ! grep -Fq 'initrd /initrd.img' "${grub_cfg}"; then
+        log_error "ISO GRUB must direct-boot the installed Ming OS initrd"
+        exit 1
+    fi
+    log_info "ISO GRUB installed-system handoff validation passed"
 }
 
 validate_r4_compatibility() {
@@ -586,7 +623,7 @@ settings_desktop = require_file("usr/share/applications/ming-settings.desktop", 
 if "Exec=/usr/local/bin/ming-settings" in settings_desktop:
     errors.append("ming-settings.desktop must use the stable ming-control-center launcher")
 
-phone_desktop = require_file("usr/local/bin/ming-phone-desktop", "Gdk.WindowTypeHint.NORMAL")
+phone_desktop = require_file("usr/local/bin/ming-phone-desktop", "Gdk.WindowTypeHint.DESKTOP")
 for marker in [
     "DESKTOP_DIR / basename",
     "set_keep_below(True)",
@@ -595,9 +632,8 @@ for marker in [
     "launch_item(item)",
     "APP_DIRS = [DESKTOP_DIR",
     "render desktop items=",
-    "self.set_size_request(76, 88)",
+    "self.set_size_request(TILE_W, TILE_H)",
     "self.fullscreen()",
-    "self.fixed.connect('draw', self.draw_background)",
     "def draw_background(self, widget, cr):",
     "def draw_icon_fallback(self, cr):",
     "def on_fixed_button_release(self, _widget, event):",
@@ -605,10 +641,10 @@ for marker in [
 ]:
     if marker not in phone_desktop:
         errors.append(f"ming-phone-desktop missing desktop-layer/core-app marker {marker}")
+if "self.fixed.connect('draw', self.draw_background)" not in phone_desktop and 'self.fixed.connect("draw", self.draw_background)' not in phone_desktop:
+    errors.append("ming-phone-desktop missing desktop-layer/core-app marker fixed draw background")
 if "window.lower()" in phone_desktop:
     errors.append("ming-phone-desktop must not call window.lower(); it can hide behind xfdesktop")
-if "Gdk.WindowTypeHint.DESKTOP" in phone_desktop:
-    errors.append("ming-phone-desktop must not use DESKTOP type; xfdesktop can intercept its clicks")
 if "Gtk.Overlay()" in phone_desktop:
     errors.append("ming-phone-desktop must not use Gtk.Overlay for desktop icons; direct Fixed drawing is more reliable")
 for marker in ["CORE_FALLBACKS", "CORE_GENERATED", "write_generated_core_launcher"]:
@@ -628,12 +664,13 @@ for marker in ["ming_log_dir()", "XDG_RUNTIME_DIR:-/tmp", "nohup ming-dock >/dev
     if marker not in ming_dock_watchdog:
         errors.append(f"ming-dock-watchdog missing logging fallback marker {marker}")
 phone_watchdog = require_file("usr/local/bin/ming-phone-desktop-watchdog", "starting ming-phone-desktop")
-for marker in ["ming_log_dir()", "start_xfdesktop_fallback()", "ming-phone-desktop did not stay running", "stop_xfdesktop"]:
+for marker in ["ming_log_dir()", "start_xfdesktop_fallback()", "ming-phone-desktop did not stay running", "stop_xfdesktop", "wait_phone_desktop_ready()", "ming-phone-desktop.ready"]:
     if marker not in phone_watchdog:
         errors.append(f"ming-phone-desktop-watchdog missing black-screen guard marker {marker}")
-for marker in ["if phone_desktop_running; then\n        stop_xfdesktop", "if phone_desktop_running; then\n        stop_xfdesktop\n    else"]:
-    if marker not in phone_watchdog:
-        errors.append("ming-phone-desktop-watchdog must stop xfdesktop only after Ming desktop is running")
+if "if wait_phone_desktop_ready" not in phone_watchdog:
+    errors.append("ming-phone-desktop-watchdog must wait for Ming desktop readiness before stopping xfdesktop")
+if 'if wait_phone_desktop_ready "${log_file}"; then\n            stop_xfdesktop' not in phone_watchdog:
+    errors.append("ming-phone-desktop-watchdog must stop xfdesktop only after Ming desktop is running")
 require_file("home/user/.config/autostart/ming-dock.desktop", "ming-dock-watchdog --session")
 require_file("home/user/.config/autostart/ming-phone-desktop.desktop", "ming-phone-desktop-watchdog --session")
 
@@ -721,6 +758,22 @@ pwquality = require_file("etc/security/pwquality.conf", "dictcheck = 0")
 if "minlen = 1" not in pwquality and "minlen=1" not in pwquality:
     errors.append("pwquality.conf must keep installer password policy lenient")
 
+ming_release = require_file("etc/ming-release", "Ming OS")
+ming_share_release = root / "usr/share/ming-release"
+if not (ming_share_release.exists() or ming_share_release.is_symlink()):
+    errors.append("missing usr/share/ming-release")
+
+grub_defaults = require_file("etc/default/grub.d/10-ming-os.cfg", "GRUB_TIMEOUT=0")
+for marker in [
+    "GRUB_TIMEOUT_STYLE=hidden",
+    "GRUB_RECORDFAIL_TIMEOUT=0",
+    "GRUB_DISABLE_SUBMENU=true",
+    "GRUB_DISABLE_OS_PROBER=true",
+    "GRUB_DISABLE_RECOVERY=true",
+]:
+    if marker not in grub_defaults:
+        errors.append(f"grub defaults missing {marker}")
+
 desktop_names = [
     "ming-network-repair.desktop",
     "ming-driver-diagnose.desktop",
@@ -791,10 +844,42 @@ set color_highlight=black/light-gray
 set menu_color_normal=white/black
 set menu_color_highlight=black/white
 set gfxmode=auto
+set default=0
+set timeout=8
+
+# If the installer ISO is still attached after installation, prefer the
+# installed disk automatically. Blank disks do not contain /etc/ming-release,
+# so first boot still enters the installer as usual.
+search --no-floppy --file --set=ming_installed /etc/ming-release
+if [ -n "\$ming_installed" ]; then
+    set default=ming-installed
+    set timeout=0
+fi
 
 # Ming OS is an installer-only image: the boot menu offers a single "安装 Ming OS"
 # entry plus a safe-graphics fallback for old hardware. The ming.installer=1 flag
 # tells the booted session to launch Calamares directly instead of a live desktop.
+menuentry "启动已安装的 Ming OS  (Boot installed Ming OS)" --id ming-installed {
+    search --no-floppy --file --set=ming_root /etc/ming-release
+    if [ -n "\$ming_root" ]; then
+        probe --set=ming_uuid --fs-uuid \$ming_root
+        set root=\$ming_root
+        if [ -e /vmlinuz ] && [ -e /initrd.img ] && [ -n "\$ming_uuid" ]; then
+            linux /vmlinuz root=UUID=\$ming_uuid ro quiet splash loglevel=3 systemd.show_status=false rd.udev.log_level=3 vt.global_cursor_default=0 nowatchdog
+            initrd /initrd.img
+            boot
+        elif [ -e /boot/vmlinuz ] && [ -e /boot/initrd.img ] && [ -n "\$ming_uuid" ]; then
+            linux /boot/vmlinuz root=UUID=\$ming_uuid ro quiet splash loglevel=3 systemd.show_status=false rd.udev.log_level=3 vt.global_cursor_default=0 nowatchdog
+            initrd /boot/initrd.img
+            boot
+        elif [ -f (\$ming_root)/boot/grub/grub.cfg ]; then
+            configfile (\$ming_root)/boot/grub/grub.cfg
+        fi
+    fi
+    echo "No installed Ming OS bootloader was found."
+    sleep 3
+}
+
 menuentry "安装 Ming OS ${MING_OS_VERSION}  (Install Ming OS)" {
  linux /live/vmlinuz boot=live rootdelay=10 live-media-path=/live union=overlay components live-config username=${MING_USER} user-fullname=Ming_OS_User hostname=ming-os locales=zh_CN.UTF-8 timezone=Asia/Shanghai keyboard-layouts=us quiet loglevel=3 systemd.show_status=false nowatchdog zswap.enabled=1 ming.installer=1
     initrd /live/initrd
@@ -888,6 +973,7 @@ build_iso() {
         -no-progress
 
     write_grub_config
+    validate_iso_grub_config
 
     log_info "配置 GRUB 字体..."
     mkdir -p "${ISO_DIR}/boot/grub/fonts"

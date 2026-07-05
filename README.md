@@ -12,7 +12,7 @@ Ming OS is a Debian 13 / Trixie based Chinese desktop system for older PCs, fami
 | Desktop | Xfce + Plank Dock + Ming desktop tools |
 | ISO | `ming-os-26.3.1-home-amd64.iso` |
 | Size | `2695856128` bytes |
-| SHA256 | `e5b35e2dd9698d87188081b66ac59bcab04e020c0fdc1ff6516f35a30d7efa32` |
+| SHA256 | `5188940fad9365921e440b60f5509d8d8fe53cf3c61c666b0c65e4a1f1bb3f48` |
 | CPU target | Debian amd64 baseline; old 64-bit CPUs without AVX2 remain in scope |
 | 32-bit status | Deferred; no i386 ISO in this release |
 
@@ -101,7 +101,7 @@ Expected public OTA response:
   "ready": true,
   "status": "ready",
   "download_url": "https://ming.scallion.uno/iso/ming-os-26.3.1-home-amd64.iso",
-  "checksum": "e5b35e2dd9698d87188081b66ac59bcab04e020c0fdc1ff6516f35a30d7efa32",
+  "checksum": "5188940fad9365921e440b60f5509d8d8fe53cf3c61c666b0c65e4a1f1bb3f48",
   "checksum_type": "sha256",
   "size": 2695856128
 }
@@ -126,7 +126,7 @@ Get-FileHash ming-os-26.3.1-home-amd64.iso -Algorithm SHA256
 The merged file must match:
 
 ```text
-e5b35e2dd9698d87188081b66ac59bcab04e020c0fdc1ff6516f35a30d7efa32
+5188940fad9365921e440b60f5509d8d8fe53cf3c61c666b0c65e4a1f1bb3f48
 ```
 
 ## Verification Status

@@ -73,6 +73,8 @@ install_base_packages() {
         grub-pc-bin \
         grub-efi-amd64-bin \
         efibootmgr \
+        eject \
+        wmctrl \
         dosfstools \
         libpwquality-tools \
         cracklib-runtime \
@@ -293,7 +295,7 @@ configure_network() {
         wpasupplicant \
         ifupdown
 
-    apt install -y --no-install-recommends iwd network-manager-iwd || true
+    apt install -y --no-install-recommends iwd || true
 
     mkdir -p /etc/NetworkManager/conf.d
     cat > /etc/NetworkManager/conf.d/wifi-backend.conf << NMWIFICFG
@@ -661,6 +663,23 @@ LSBRELEASE
 
     # 确保 /etc/debian_version 显示 Debian 13 (Trixie)，而非历史遗留的12
     echo "trixie/sid" > /etc/debian_version
+
+    cat > /etc/ming-release << RELEASE
+Ming OS ${MING_OS_VERSION} Home Edition
+RELEASE
+    mkdir -p /usr/share /etc/default/grub.d
+    ln -sf /etc/ming-release /usr/share/ming-release
+    cat > /etc/default/grub.d/10-ming-os.cfg << GRUBCFG
+GRUB_DISTRIBUTOR="Ming OS"
+GRUB_THEME="/boot/grub/themes/ming/theme.txt"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash loglevel=3 systemd.show_status=false rd.udev.log_level=3 vt.global_cursor_default=0 nowatchdog"
+GRUB_TIMEOUT=0
+GRUB_TIMEOUT_STYLE=hidden
+GRUB_RECORDFAIL_TIMEOUT=0
+GRUB_DISABLE_SUBMENU=true
+GRUB_DISABLE_OS_PROBER=true
+GRUB_DISABLE_RECOVERY=true
+GRUBCFG
 }
 
 # ======================== 安装器品牌与安装后身份兜底 ========================
@@ -732,6 +751,19 @@ ensure_ming_user() {
     chroot "${target}" chown "${user_name}:${user_name}" "${user_home}" >/dev/null 2>&1 || true
 }
 
+ensure_kernel_boot_links() {
+    local kernel initrd version
+    kernel="$(find "${target}/boot" -maxdepth 1 -type f -name 'vmlinuz-*' 2>/dev/null | sort -V | tail -n 1 || true)"
+    [[ -n "${kernel}" ]] || return 0
+    version="${kernel##*/vmlinuz-}"
+    initrd="${target}/boot/initrd.img-${version}"
+    [[ -s "${initrd}" ]] || initrd="$(find "${target}/boot" -maxdepth 1 -type f -name 'initrd.img-*' 2>/dev/null | sort -V | tail -n 1 || true)"
+    ln -sfn "boot/$(basename "${kernel}")" "${target}/vmlinuz" 2>/dev/null || true
+    if [[ -n "${initrd}" && -s "${initrd}" ]]; then
+        ln -sfn "boot/$(basename "${initrd}")" "${target}/initrd.img" 2>/dev/null || true
+    fi
+}
+
 write_file /etc/os-release <<OSRELEASE
 NAME="Ming OS"
 VERSION="${version} Home Edition"
@@ -761,6 +793,10 @@ ISSUE
 write_file /etc/issue.net <<ISSUENET
 Ming OS ${version} Home Edition
 ISSUENET
+
+write_file /etc/ming-release <<MINGRELEASE
+Ming OS ${version} Home Edition
+MINGRELEASE
 
 echo "trixie/sid" > "${target}/etc/debian_version" 2>/dev/null || true
 echo "ming-os" > "${target}/etc/hostname" 2>/dev/null || true
@@ -792,6 +828,7 @@ BACKSPACE="guess"
 TARGETKEYBOARD
 
 ensure_ming_user
+ensure_kernel_boot_links
 
 mkdir -p "${target}/etc/security"
 cat > "${target}/etc/security/pwquality.conf" <<'TARGETPWQUALITY'
@@ -811,9 +848,16 @@ GRUB_DISTRIBUTOR="Ming OS"
 GRUB_THEME="/boot/grub/themes/ming/theme.txt"
 # 老旧硬件友好 + 隐藏内核日志：安静启动、低日志级别、隐藏 systemd 状态刷屏
 GRUB_CMDLINE_LINUX_DEFAULT="quiet splash loglevel=3 systemd.show_status=false rd.udev.log_level=3 vt.global_cursor_default=0 nowatchdog"
-GRUB_TIMEOUT=3
-GRUB_TIMEOUT_STYLE=menu
+GRUB_TIMEOUT=0
+GRUB_TIMEOUT_STYLE=hidden
+GRUB_RECORDFAIL_TIMEOUT=0
+GRUB_DISABLE_SUBMENU=true
+GRUB_DISABLE_OS_PROBER=true
+GRUB_DISABLE_RECOVERY=true
 GRUBCFG
+
+mkdir -p "${target}/usr/share"
+ln -sf /etc/ming-release "${target}/usr/share/ming-release" 2>/dev/null || true
 
 mkdir -p "${target}/etc"
 cat > "${target}/etc/machine-info" <<MACHINEINFO
@@ -958,9 +1002,20 @@ install_uefi_grub() {
             --target=x86_64-efi \
             --efi-directory=/boot/efi \
             --bootloader-id="Ming OS" \
+            --recheck || echo "WARN: UEFI NVRAM grub-install failed; keeping removable fallback"
+        chroot "${root}" /usr/sbin/grub-install \
+            --target=x86_64-efi \
+            --efi-directory=/boot/efi \
+            --bootloader-id="Ming OS" \
             --recheck \
             --removable
     elif command -v grub-install >/dev/null 2>&1; then
+        grub-install \
+            --target=x86_64-efi \
+            --efi-directory="${root}/boot/efi" \
+            --boot-directory="${root}/boot" \
+            --bootloader-id="Ming OS" \
+            --recheck || echo "WARN: UEFI NVRAM grub-install failed; keeping removable fallback"
         grub-install \
             --target=x86_64-efi \
             --efi-directory="${root}/boot/efi" \
@@ -992,9 +1047,28 @@ install_bios_grub() {
     fi
 }
 
+prefer_ming_uefi_boot() {
+    [ -d /sys/firmware/efi ] || return 0
+    command -v efibootmgr >/dev/null 2>&1 || return 0
+    entry="$(efibootmgr 2>/dev/null | sed -n 's/^Boot\([0-9A-Fa-f]\{4\}\)\*.*Ming OS.*/\1/p' | head -n 1)"
+    [ -n "${entry}" ] || return 0
+    echo "Ming UEFI boot entry=${entry}"
+    efibootmgr -n "${entry}" >/dev/null 2>&1 || true
+    order="$(efibootmgr 2>/dev/null | awk -F': ' '/BootOrder/ {print $2; exit}')"
+    if [ -n "${order}" ]; then
+        rest="$(printf '%s\n' "${order}" | tr ',' '\n' | awk -v e="${entry}" '$0 != e && $0 != "" {print}' | paste -sd, -)"
+        if [ -n "${rest}" ]; then
+            efibootmgr -o "${entry},${rest}" >/dev/null 2>&1 || true
+        else
+            efibootmgr -o "${entry}" >/dev/null 2>&1 || true
+        fi
+    fi
+}
+
 if [ -d /sys/firmware/efi ]; then
     if install_uefi_grub; then
         echo "Ming UEFI bootloader path completed"
+        prefer_ming_uefi_boot
     else
         # UEFI 安装失败（无论是 ESP 未挂载还是 grub-install 出错），
         # 都降级到 BIOS GRUB——确保老主板/半残 UEFI 机器仍可引导
@@ -1089,16 +1163,60 @@ script:
   - "/usr/local/sbin/ming-install-bootloader"
 BOOTLOADERCONF
 
+    cat > /usr/local/sbin/ming-finish-install-reboot << 'FINISHREBOOT'
+#!/usr/bin/env bash
+set +e
+
+LOG=/tmp/ming-installer/finish-reboot.log
+mkdir -p /tmp/ming-installer
+exec >>"${LOG}" 2>&1
+
+echo "==== Ming finish reboot $(date -Is) ===="
+sync
+
+if [ -d /sys/firmware/efi ] && command -v efibootmgr >/dev/null 2>&1; then
+    entry="$(efibootmgr 2>/dev/null | sed -n 's/^Boot\([0-9A-Fa-f]\{4\}\)\*.*Ming OS.*/\1/p' | head -n 1)"
+    if [ -n "${entry}" ]; then
+        echo "Prefer UEFI Boot${entry} for next boot"
+        efibootmgr -n "${entry}" || true
+        order="$(efibootmgr 2>/dev/null | awk -F': ' '/BootOrder/ {print $2; exit}')"
+        if [ -n "${order}" ]; then
+            rest="$(printf '%s\n' "${order}" | tr ',' '\n' | awk -v e="${entry}" '$0 != e && $0 != "" {print}' | paste -sd, -)"
+            if [ -n "${rest}" ]; then
+                efibootmgr -o "${entry},${rest}" || true
+            else
+                efibootmgr -o "${entry}" || true
+            fi
+        fi
+    else
+        echo "No Ming OS UEFI entry found"
+    fi
+fi
+
+if command -v eject >/dev/null 2>&1; then
+    for dev in /dev/cdrom /dev/sr0 /dev/sr1; do
+        [ -e "${dev}" ] || continue
+        echo "Trying to eject ${dev}"
+        eject -r "${dev}" || eject "${dev}" || true
+    done
+fi
+
+sync
+systemctl -i reboot
+FINISHREBOOT
+    chmod +x /usr/local/sbin/ming-finish-install-reboot
+
+    cat > /etc/calamares/modules/finished.conf << 'FINISHEDCONF'
+---
+restartNowEnabled: true
+restartNowChecked: true
+restartNowCommand: "/usr/local/sbin/ming-finish-install-reboot"
+FINISHEDCONF
+
     cat > /etc/calamares/modules/unpackfs.conf << 'UNPACKFSCONF'
 ---
 unpack:
-  # live-boot 3.x 标准挂载路径（Debian Trixie 默认）
-  # 旧路径 /run/ming-installer/filesystem.squashfs 已废弃，会导致 Calamares 安装失败
-  - source: "/run/live/medium/live/filesystem.squashfs"
-    sourcefs: "squashfs"
-    destination: ""
-  # live-boot 2.x / 老版本回退路径
-  - source: "/lib/live/mount/medium/live/filesystem.squashfs"
+  - source: "/run/ming-installer/filesystem.squashfs"
     sourcefs: "squashfs"
     destination: ""
 UNPACKFSCONF

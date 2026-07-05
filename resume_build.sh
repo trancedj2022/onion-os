@@ -55,6 +55,7 @@ resume_main() {
 
     # 执行剩余模块（03 及之后）
     local modules=(
+        "01_base.sh"
         "03_desktop.sh"
         "04_garlic_claw.sh"
         "05_security_tools.sh"
